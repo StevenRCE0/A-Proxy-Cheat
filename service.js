@@ -5,7 +5,7 @@ import { config } from 'dotenv'
 
 // read from env file
 config()
-const port = 3000
+const port = process.env.PORT ?? 3000
 const url = process.env.URL
 const filePath = process.env.FILE
 
