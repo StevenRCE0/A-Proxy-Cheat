@@ -1,0 +1,13 @@
+{
+    "name": "apc",
+    "type": "module",
+    "packageManager": "yarn@3.2.1",
+    "dependencies": {
+        "dotenv": "^16.0.3",
+        "mime": "^3.0.0"
+    },
+    "scripts": {
+        "start": "node service.js",
+        "service": "forever start service.js"
+    }
+}
