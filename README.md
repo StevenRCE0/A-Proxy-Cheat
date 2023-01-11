@@ -1,4 +1,4 @@
-# APC
+# A Proxy Cheat
 一个转换 Surge 订阅配置文件的小工具。
 
 # Usage
