@@ -6,6 +6,7 @@ import { config } from 'dotenv'
 // read from env file
 config()
 const port = process.env.PORT ?? 3000
+const useHttps = process.env.HTTPS === undefined ? false : !!process.env.HTTPS
 const url = process.env.URL
 const filePath = process.env.FILE
 
@@ -84,7 +85,7 @@ createServer(async (req, res) => {
 
     // proccess url characters
     sections = sections.map((section) => decodeURI(section))
-    targetContent = `#!MANAGED-CONFIG http://${req.headers.host}${req.url.toString()}\n` + targetContent
+    targetContent = `#!MANAGED-CONFIG http${useHttps ? 's' : ''}://${req.headers.host}${req.url.toString()}\n` + targetContent
 
     console.log(
         `Request for ${sections.length.toString()} ${sections.join(', ')}`
