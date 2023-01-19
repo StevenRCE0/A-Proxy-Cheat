@@ -8,9 +8,9 @@ config()
 const port = process.env.PORT ?? 3000
 const useHttps = process.env.HTTPS === undefined ? false : !!process.env.HTTPS
 const url = process.env.URL
-const filePath = process.env.FILE
+const defaultFilePath = process.env.FILE
 
-if (!url || !filePath) {
+if (!url || !defaultFilePath) {
     throw new Error('No URL or FILE provided in environment variables')
 }
 
@@ -70,9 +70,38 @@ createServer(async (req, res) => {
         'Content-Type': fetchedHeaders.get('Content-Type'),
         'Content-Disposition': 'attachment; filename=Aggregated.conf',
     }
-    let targetContent = readFileSync(filePath, 'utf8')
     const requestURL = new URL(req.url, `http://${req.headers.host}`)
     let sections = requestURL.search.substring(1).split('&')
+
+    let filePath
+    let urlPath = requestURL.pathname.split('/')[1]
+    const urlPathKeywords = ['PORT', 'URL', 'FILE', 'HTTPS']
+    if (urlPathKeywords.includes(urlPath)) {
+        res.writeHead(200)
+        res.end('Reserved: ' + urlPath)
+        return
+    } else
+    if (typeof urlPath === 'string' && urlPath !== '') {
+        if (typeof process.env[urlPath] === 'string') {
+            filePath = process.env[urlPath]
+        } else {
+            res.writeHead(200)
+            res.end('Invalid path: ' + urlPath)
+            return
+        }
+    } else {
+        filePath = defaultFilePath
+    }
+
+    let targetContent
+    try {
+        targetContent = readFileSync(filePath, 'utf8')
+    } catch (error) {
+        console.log(error)
+        res.writeHead(200)
+        res.end('File not found: ' + process.env[urlPath] + '\nFor: ' + urlPath)
+        return
+    }
 
     if (
         sections.length === 0 ||
@@ -84,8 +113,26 @@ createServer(async (req, res) => {
     }
 
     // proccess url characters
-    sections = sections.map((section) => decodeURI(section))
-    targetContent = `#!MANAGED-CONFIG http${useHttps ? 's' : ''}://${req.headers.host}${req.url.toString()}\n` + targetContent
+    const keywords = ['sslon', 'ssloff']
+    let params = sections.map(decodeURI)
+    sections = params.filter((param) => !keywords.includes(param))
+    params = params.filter((param) => !sections.includes(param))
+
+    let overrideSSL = undefined
+
+    // add sslon and ssloff
+    if (params.includes('sslon') && params.includes('ssloff')) {
+        res.writeHead(200)
+        res.end('sslon and ssloff cannot be used together')
+        return
+    }
+    if (params.includes('sslon')) {
+        overrideSSL = true
+    } else if (params.includes('ssloff')) {
+        overrideSSL = false
+    }
+    
+    targetContent = `#!MANAGED-CONFIG http${(overrideSSL ?? useHttps) ? 's' : ''}://${req.headers.host}${req.url.toString()}\n` + targetContent
 
     console.log(
         `Request for ${sections.length.toString()} ${sections.join(', ')}`
