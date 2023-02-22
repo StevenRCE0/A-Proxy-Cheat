@@ -2,6 +2,8 @@
 
 一个转换 Surge 订阅配置文件的小工具。
 
+## 💣 我已部署 [Swift 版本](https://github.com/StevenRCE0/APC-Swift)，这个仓库不再更新 💣
+
 # Usage
 
 ## Configuration
